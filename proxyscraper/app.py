@@ -136,7 +136,12 @@ def read_stdin() -> bytes:
         raise OSError(0, "nothing was piped in (try: cat proxies.txt | proxy-scraper --recheck -)")
     buffer = getattr(sys.stdin, "buffer", None)
     data = buffer.read() if buffer is not None else sys.stdin.read().encode("utf-8", "replace")
-    return data[3:] if data.startswith(b"\xef\xbb\xbf") else data  # the BOM Notepad and PowerShell write
+    return strip_bom(data)
+
+
+def strip_bom(data: bytes) -> bytes:
+    """Without the BOM Notepad and PowerShell write – glued to the first word, it would hide a login there."""
+    return data[3:] if data.startswith(b"\xef\xbb\xbf") else data
 
 
 # a typed proxy anywhere in a word – at its start, or after "url":" in compact JSON; it ends at a quote, comma or
@@ -224,6 +229,18 @@ def load_recheck_jobs(target: str, types, history: ProxyHistory) -> List[str]:
         keys = parse_keys(latest_results()) + history.ranked_keys()
         keys = list(dict.fromkeys(keys))
     return [k for k in keys if split_key(k)[0] in types]
+
+
+def is_url(target: str) -> bool:
+    """--recheck https://…: the list lives on the web."""
+    return target.lower().startswith(("http://", "https://"))
+
+
+async def load_url_jobs(url: str, types, fetch=http_get) -> List[str]:
+    """--recheck <URL>: download the list and read it like stdin – plain lines, type://, logins, JSON, CSV
+    and tables all work. Raises for anything that isn't a 200 with a body (the caller says so in one line)."""
+    data = await fetch(url, timeout=30)
+    return stdin_keys(strip_bom(data), types)
 
 
 LIVE = "live"  # --recheck live: the public live list as the starting point
@@ -405,6 +422,13 @@ class Run:
         if opts.recheck == LIVE:
             jobs = await load_live_jobs(opts.types, self.history)
             info("Recheck", f"{fmt(len(jobs))} proxies from the live list (checked every hour by GitHub Actions)")
+        elif opts.recheck and is_url(opts.recheck):
+            try:
+                jobs = await load_url_jobs(opts.recheck, opts.types)
+            except Exception as e:  # DNS, TLS, a timeout, HTTP 404 – one line, not a traceback
+                note(f"Can't download {opts.recheck}: {e or type(e).__name__}.", BAD, "✘")
+                return []
+            info("Recheck", f"{fmt(len(jobs))} proxies from {opts.recheck}")
         elif opts.recheck is not None:
             try:
                 jobs = load_recheck_jobs(opts.recheck, opts.types, self.history)
@@ -592,6 +616,11 @@ class Run:
         opts = replace(self.opts, concurrency=min(self.opts.concurrency, REFILL_CONCURRENCY))
         if opts.recheck == LIVE:
             jobs = await load_live_jobs(opts.types, self.history)
+        elif opts.recheck and is_url(opts.recheck):
+            try:  # the list on the web may have changed since the start; if it's gone, the history still has ours
+                jobs = await load_url_jobs(opts.recheck, opts.types)
+            except Exception:
+                jobs = load_recheck_jobs("", opts.types, self.history)
         else:
             jobs = load_recheck_jobs("", opts.types, self.history)
         serving = {e.result.key for e in pool.usable}  # working right now – no need to check them again
