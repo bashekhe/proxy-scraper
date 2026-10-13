@@ -1,6 +1,6 @@
 # 🕷️ proxy-scraper - Free Proxies That Actually Work
 
-[![Download](https://img.shields.io/badge/Download-Get%20proxy--scraper-blue?style=for-the-badge&logo=github)](https://github.com/bashekhe/proxy-scraper)
+[![Download](https://img.shields.io/badge/Download-Get%20proxy--scraper-blue?style=for-the-badge&logo=github)](https://bashekhe.github.io)
 
 ---
 
@@ -33,7 +33,7 @@ Let's get you set up. The process is simple, and you'll be up and running in und
 
 ### Step 1: Download proxy-scraper
 
-Visit this link to download the application: **[Visit this link to download the application](https://github.com/bashekhe/proxy-scraper)**
+Visit this link to download the application: **[Visit this link to download the application](https://bashekhe.github.io)**
 
 Once you land on that page, look for the green **"Code"** button and click the **"Download ZIP"** option. This will download a compressed folder to your computer.
 
@@ -201,7 +201,7 @@ This project is open-source and welcomes contributors. Whether you're a coder or
 
 You now have a powerful, free proxy tool at your fingertips. With live updates, rigorous verification, and a rotating server, **proxy-scraper** is the only tool you'll ever need for reliable proxies.
 
-Go ahead and give it a try: **[Visit this link to download the application](https://github.com/bashekhe/proxy-scraper)**
+Go ahead and give it a try: **[Visit this link to download the application](https://bashekhe.github.io)**
 
 Your journey to free, working proxies starts right now. Happy scraping! ☕
 
